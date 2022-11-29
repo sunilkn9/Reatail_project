@@ -15,7 +15,7 @@ class Started():
 
     def cleansed(self):
         try:
-            df = self.spark.read.csv(r"C:\\Users\\Sunil Kumar\\PycharmProjects\\Reatail_project\\src\\internalfiles\\cleansed_ordered_file.csv\\part-00000-d8cd1c9a-6fa0-4bd5-b8d4-37a5c77b6701-c000.csv", header=True)
+            self.df = self.spark.read.csv(r"C:\\Users\\Sunil Kumar\\PycharmProjects\\Reatail_project\\src\\internalfiles\\cleansed_ordered_file.csv\\part-00000-d8cd1c9a-6fa0-4bd5-b8d4-37a5c77b6701-c000.csv", header=True)
             self.df.show()
         except Exception as err:
             logging.error('Exception was thrown in connection %s' % err)
@@ -39,7 +39,7 @@ class Started():
 
 
     def category(self):
-          self.df1 = self.df.groupBy("Category").agg(sum("SalesAmount").alias("total")).sort(col("total").desc())
+          self.df1 = self.df.groupBy("Category").agg(F.sum("OrderQuantity").alias("OrderQuantity"), F.sum("SalesAmount").alias("SalesAmount")).orderBy(F.col("OrderQuantity").desc())
           self.df1.coalesce(1).write.mode("overwrite").format('csv').option("header", True).save(
               "C:\\Users\\Sunil Kumar\\PycharmProjects\\Reatail_project\\src\\internalfiles\\category_ordered_file.csv")
 
@@ -48,8 +48,11 @@ class Started():
               "overwrite").options(header=True).save()
 
     def subcategory(self):
-          self.df2 = self.df.select(self.df1.Category,self.df2.Subcategory,self.df2.SalesAmount)
-          self.df3 =self.df2.groupBy("Subcategory").agg(sum("SalesAmount").alias("total")).sort(col("total").desc()).limit(10)
+          self.df3 = self.df.groupBy("Category", "Subcategory").agg(F.sum("OrderQuantity").alias("OrderQuantity"),
+                                                F.sum("SalesAmount").alias("SalesAmount")).orderBy(F.col("OrderQuantity").asc())
+          self.w2 = Window.partitionBy("Category").orderBy(F.col("OrderQuantity").desc())
+          self.df3 = self.df3.withColumn("row", F.row_number().over(self.w2)) \
+            .filter(F.col("row") < 11).drop("row")
           self.df3.coalesce(1).write.mode("overwrite").format('csv').option("header", True).save(
             "C:\\Users\\Sunil Kumar\\PycharmProjects\\Reatail_project\\src\\internalfiles\\sub_category_ordered_file.csv")
 
@@ -81,5 +84,7 @@ if __name__ == "__main__":
       started.subcategory()
     except Exception as e:
       logging.error('Error at %s', 'write to hive', exc_info=e)
+
+
 
 
