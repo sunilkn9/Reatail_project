@@ -37,18 +37,12 @@ class Started():
 
 
     def category(self):
-          self.df1 = self.df2.groupBy("ProductName").agg(F.sum("salesamt-pstded").alias("salesamt-pstded"), F.sum("SalesAmount").alias("SalesAmount")).orderBy(F.col("salesamt-pstded").desc())
-          self.w3 = Window.partitionBy("ProductName").orderBy(F.col("salesamt-pstded").desc())
-          self.df3 = self.df1.withColumn("row", F.row_number().over(self.w3)) \
-                         .filter(F.col("row") < 11).drop("row")
-          self.df3.coalesce(1).write.mode("overwrite").format('csv').option("header", True).save(
-              "C:\\Users\\Sunil Kumar\\PycharmProjects\\Reatail_project\\outputs\\curated_ordered_file.csv")
+          self.df1 = self.df2.groupBy("ProductName").agg(F.sum("salesamt-pstded").alias("salesamt-pstded"), F.sum("SalesAmount").alias("SalesAmount")).orderBy(F.col("salesamt-pstded").desc()).limit(10)
+     
 
     def products(self):
-          self.df4 = self.df2.groupBy("ProductName","Category").agg(F.sum("salesamt-pstded").alias("salesamt-pstded")).orderBy(F.col("salesamt-pstded").desc())
-          self.w2 = Window.partitionBy("ProductName").orderBy(F.col("salesamt-pstded").desc())
-          self.df5 = self.df4.withColumn("row", F.row_number().over(self.w2)) \
-                             .filter(F.col("row") < 11).drop("row")
+          self.df4 = self.df2.groupBy("ProductName","Category").agg(F.sum("salesamt-pstded").alias("salesamt-pstded")).orderBy(F.col("salesamt-pstded").desc()).limit(10)
+       
 
           self.df5.coalesce(1).write.mode("overwrite").format('csv').option("header", True).save(
             "C:\\Users\\Sunil Kumar\\PycharmProjects\\Reatail_project\\outputs\\products_ordered_file.csv")
